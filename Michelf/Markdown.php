@@ -55,6 +55,11 @@ class Markdown {
 		# Transform text using parser.
 		return $parser->transform($text);
 	}
+    
+    static function setCallbacks($callbacks)
+    {
+        self::$callbacks = $callbacks;
+    }
 
 	### Configuration Variables ###
 
@@ -84,6 +89,9 @@ class Markdown {
 	# Table of hash values for escaped characters:
 	var $escape_chars = '\`*_{}[]()>#+-.!';
 	var $escape_chars_re;
+    
+    # Post processing callbacks
+    static $callbacks;
 
 
 	function __construct() {
@@ -966,16 +974,22 @@ class Markdown {
 
 		return $text;
 	}
-	function _doCodeBlocks_callback($matches) {
+	
+    function _doCodeBlocks_callback($matches) {
 		$codeblock = $matches[1];
-
 		$codeblock = $this->outdent($codeblock);
-		$codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
-
-		# trim leading newlines and trailing newlines
-		$codeblock = preg_replace('/\A\n+|\n+\z/', '', $codeblock);
-
-		$codeblock = "<pre><code>$codeblock\n</code></pre>";
+        $codeblock = preg_replace('/\A\n+|\n+\z/', '', $codeblock);
+        
+        if(is_object(self::$callbacks) && method_exists(self::$callbacks, 'codeBlock'))
+        {
+            $codeblock = self::$callbacks->codeBlock($codeblock);
+        }        
+        else
+        {
+            $codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+            # trim leading newlines and trailing newlines
+            $codeblock = "<pre><code>$codeblock\n</code></pre>";            
+        }
 		return "\n\n".$this->hashBlock($codeblock)."\n\n";
 	}
 
@@ -2477,7 +2491,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				(?:\n|\A)
 				# 1: Opening marker
 				(
-					~{3,} # Marker: three tilde or more.
+					[~`]{3,} # Marker: three tilde or more.
 				)
 				[ ]*
 				(?:
@@ -2506,20 +2520,26 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 		$classname =& $matches[2];
 		$attrs     =& $matches[3];
 		$codeblock = $matches[4];
-		$codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
-		$codeblock = preg_replace_callback('/^\n+/',
-			array(&$this, '_doFencedCodeBlocks_newlines'), $codeblock);
-
+        
 		if ($classname != "") {
 			if ($classname{0} == '.')
 				$classname = substr($classname, 1);
 			$attr_str = ' class="'.$this->code_class_prefix.$classname.'"';
 		} else {
 			$attr_str = $this->doExtraAttributes($this->code_attr_on_pre ? "pre" : "code", $attrs);
-		}
-		$pre_attr_str  = $this->code_attr_on_pre ? $attr_str : '';
-		$code_attr_str = $this->code_attr_on_pre ? '' : $attr_str;
-		$codeblock  = "<pre$pre_attr_str><code$code_attr_str>$codeblock</code></pre>";
+		}        
+        
+        if(is_object(self::$callbacks) && method_exists(self::$callbacks, 'codeBlock'))
+        {
+            $codeblock = self::$callbacks->codeBlock($codeblock, $classname);
+        }        
+        else
+        {
+            $codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+            $pre_attr_str  = $this->code_attr_on_pre ? $attr_str : '';
+            $code_attr_str = $this->code_attr_on_pre ? '' : $attr_str;
+            $codeblock  = "<pre$pre_attr_str><code$code_attr_str>$codeblock</code></pre>";            
+        }
 		
 		return "\n\n".$this->hashBlock($codeblock)."\n\n";
 	}
