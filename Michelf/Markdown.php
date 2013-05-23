@@ -2306,8 +2306,12 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 
 
 		$url = $this->encodeAttribute($url);
-
-		$result = "<a href=\"$url\"";
+		
+			
+		$target="";
+		if(substr($url,0,4)=='http') $target='_blank';
+		$result = "<a target='$target' href=\"$url\"";		
+	
 		if (isset($title)) {
 			$title = $this->encodeAttribute($title);
 			$result .=  " title=\"$title\"";
