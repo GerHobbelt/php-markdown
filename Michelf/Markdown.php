@@ -128,7 +128,7 @@ class Markdown {
 	protected function teardown() {
 	#
 	# Called after the transformation process to clear any variable 
-	# which may be taking up memory unnecessarly.
+	# which may be taking up memory unnecessarily.
 	#
 		$this->urls = array();
 		$this->titles = array();
@@ -138,7 +138,7 @@ class Markdown {
 
 	public function transform($text) {
 	#
-	# Main function. Performs some preprocessing on the input text
+	# Main function. Perform some preprocessing on the input text
 	# and pass it through the document gamut.
 	#
 		$this->setup();
@@ -235,7 +235,7 @@ class Markdown {
 		# We only want to do this for block-level HTML tags, such as headers,
 		# lists, and tables. That's because we still want to wrap <p>s around
 		# "paragraphs" that are wrapped in non-block-level tags, such as anchors,
-		# phrase emphasis, and spans. The list of tags we're looking for is
+		# phrase emphases, and spans. The list of tags we're looking for is
 		# hard-coded:
 		#
 		# *  List "a" is made of tags which can be both inline or block-level.
@@ -375,12 +375,12 @@ class Markdown {
 	
 	protected function hashPart($text, $boundary = 'X') {
 	#
-	# Called whenever a tag must be hashed when a function insert an atomic 
-	# element in the text stream. Passing $text to through this function gives
+	# Called whenever a tag must be hashed when a function inserts an atomic 
+	# element in the text stream. Passing $text through this function gives
 	# a unique text-token which will be reverted back when calling unhash.
 	#
-	# The $boundary argument specify what character should be used to surround
-	# the token. By convension, "B" is used for block elements that needs not
+	# The $boundary argument specifies what character should be used to surround
+	# the token. By convension, "B" is used for block elements that do not need
 	# to be wrapped into paragraph tags at the end, ":" is used for elements
 	# that are word separators and "X" is used in the general case.
 	#
@@ -422,8 +422,8 @@ class Markdown {
 	# Run block gamut tranformations.
 	#
 		# We need to escape raw HTML in Markdown source before doing anything 
-		# else. This need to be done for each block, and not only at the 
-		# begining in the Markdown function since hashed blocks can be part of
+		# else. This needs to be done for each block, and not only at the 
+		# begining in the Markdown function, since hashed blocks can be part of
 		# list items and could have been indented. Indented blocks would have 
 		# been seen as a code block in a previous pass of hashHTMLBlocks.
 		$text = $this->hashHTMLBlocks($text);
@@ -802,7 +802,7 @@ class Markdown {
 			);
 
 		foreach ($markers_relist as $marker_re => $other_marker_re) {
-			# Re-usable pattern to match any entirel ul or ol list:
+			# Re-usable pattern to match any entire ul or ol list:
 			$whole_list_re = '
 				(								# $1 = whole list
 				  (								# $2
@@ -830,8 +830,8 @@ class Markdown {
 				)
 			'; // mx
 			
-			# We use a different prefix before nested lists than top-level lists.
-			# See extended comment in _ProcessListItems().
+			# We use a different prefix before nested lists than before 
+			# top-level lists. See extended comment in _ProcessListItems().
 		
 			if ($this->list_level) {
 				$text = preg_replace_callback('{
@@ -1447,8 +1447,8 @@ class Markdown {
 
 		while (1) {
 			#
-			# Each loop iteration seach for either the next tag, the next 
-			# openning code span marker, or the next escaped character. 
+			# Each loop iteration searches for either the next tag, the next 
+			# opening code span marker, or the next escaped character. 
 			# Each token is then passed to handleSpanToken.
 			#
 			$parts = preg_split($span_re, $str, 2, PREG_SPLIT_DELIM_CAPTURE);
@@ -1531,9 +1531,9 @@ class Markdown {
 	#
 	# Replace tabs with the appropriate amount of space.
 	#
-		# For each line we separate the line in blocks delemited by
+		# For each line we separate the line into blocks delemited by
 		# tab characters. Then we reconstruct every line by adding the 
-		# appropriate number of space between each blocks.
+		# appropriate number of spaces between the blocks.
 		
 		$text = preg_replace_callback('/^.*\t.*$/m',
 			array(&$this, '_detab_callback'), $text);
@@ -1952,7 +1952,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 			$parts = preg_split($block_tag_re, $text, 2, 
 								PREG_SPLIT_DELIM_CAPTURE);
 			
-			# If in Markdown span mode, add a empty-string span-level hash 
+			# If in Markdown span mode, add an empty-string span-level hash 
 			# after each newline to prevent triggering any block element.
 			if ($span) {
 				$void = $this->hashPart("", ':');
