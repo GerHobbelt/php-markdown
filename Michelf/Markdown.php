@@ -984,7 +984,7 @@ class Markdown {
 		$codeblock = $this->outdent($codeblock);
         $codeblock = preg_replace('/\A\n+|\n+\z/', '', $codeblock);
         
-        if(is_object(self::$callbacks) && method_exists(self::$callbacks, 'codeBlock'))
+        if (is_object(self::$callbacks) && method_exists(self::$callbacks, 'codeBlock'))
         {
             $codeblock = self::$callbacks->codeBlock($codeblock);
         }        
@@ -997,31 +997,32 @@ class Markdown {
 		return "\n\n".$this->hashBlock($codeblock)."\n\n";
 	}
 
-  function doDisplayMath($text) {
-  #
-  # Wrap text between \[ and \] in display math tags.
-  #
-    $text = preg_replace_callback('{
-      ^\\\\         # line starts with a single backslash (double escaping)
-      \[            # followed by a square bracket
-      (.+)          # then the actual LaTeX code
-      \\\\          # followed by another backslash
-      \]            # and closing bracket
-      \s*$          # and maybe some whitespace before the end of the line
-      }mx',
-      array(&$this, '_doDisplayMath_callback'), $text);
+	protected function doDisplayMath($text) {
+	#
+	# Wrap text between \[ and \] in display math tags.
+	#
+		$text = preg_replace_callback('{
+			^\\\\         # line starts with a single backslash (double escaping)
+			\[            # followed by a square bracket
+			(.+)          # then the actual LaTeX code
+			\\\\          # followed by another backslash
+			\]            # and closing bracket
+			\s*$          # and maybe some whitespace before the end of the line
+			}mx',
+			array(&$this, '_doDisplayMath_callback'), $text);
       
-    return $text;
-  }
-  function _doDisplayMath_callback($matches) {
-    $texblock = $matches[1];
-    # $texblock = htmlspecialchars(trim($texblock), ENT_NOQUOTES);
-    $texblock = trim($texblock);
-    if (MARKDOWN_MATH_TYPE == "mathjax") {
-      $texblock = "<span class=\"MathJax_Preview\">[$texblock]</span><script type=\"math/tex; mode=display\">$texblock</script>";
-    } else {
-		  $texblock = "<div class=\"math\">$texblock</div>";
-	  }
+		return $text;
+	}
+
+	protected function _doDisplayMath_callback($matches) {
+		$texblock = $matches[1];
+		# $texblock = htmlspecialchars(trim($texblock), ENT_NOQUOTES);
+		$texblock = trim($texblock);
+		if (MARKDOWN_MATH_TYPE == "mathjax") {
+			$texblock = "<span class=\"MathJax_Preview\">[$texblock]</span><script type=\"math/tex; mode=display\">$texblock</script>";
+		} else {
+			$texblock = "<div class=\"math\">$texblock</div>";
+		}
 		return "\n\n".$this->hashBlock($texblock)."\n\n";
 	}
     
@@ -1030,29 +1031,27 @@ class Markdown {
 	#
 	# Create a code span markup for $code. Called from handleSpanToken.
 	#
-		if(count(explode("\n", $code)) > 1) {
+		if (count(explode("\n", $code)) > 1) {
 			$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
 			return $this->hashPart("<pre><code>$code</code></pre>");
-		}else{
+		} else {
 			$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
 			return $this->hashPart("<code>$code</code>");
 		}
 	}
 
-  function makeInlineMath($tex) {
+	protected function makeInlineMath($tex) {
 	#
 	# Create a code span markup for $tex. Called from handleSpanToken.
 	#
-    # $tex = htmlspecialchars(trim($tex), ENT_NOQUOTES);
-    $tex = trim($tex);
+	# $tex = htmlspecialchars(trim($tex), ENT_NOQUOTES);
+		$tex = trim($tex);
 		if (MARKDOWN_MATH_TYPE == "mathjax") {
-		  return $this->hashPart("<span class=\"MathJax_Preview\">[$tex]</span><script type=\"math/tex\">$tex</script>");
-	  } else {
-		  return $this->hashPart("<span type=\"math\">$tex</span>");
-	  }
+			return $this->hashPart("<span class=\"MathJax_Preview\">[$tex]</span><script type=\"math/tex\">$tex</script>");
+		} else {
+			return $this->hashPart("<span type=\"math\">$tex</span>");
+		}
 	}
-
-	
 
 	protected $em_relist = array(
 		''  => '(?:(?<!\*)\*(?!\*)|(?<!_)_(?!_))(?=\S|$)(?![\.,:;]\s)',
@@ -1454,7 +1453,7 @@ class Markdown {
 					(?<![`\\\\])
 					`+						# code span marker
 				|
-				  \\ \(         # inline math
+					\\ \(                   # inline math
 			'.( $this->no_markup ? '' : '
 				|
 					<!--    .*?     -->		# comment
@@ -1510,25 +1509,23 @@ class Markdown {
 		switch ($token{0}) {
 			case "\\":
 				if ($token{1} == "(") {
-			    #echo "$token\n";
-			    #echo "$str\n\n";
-			    $texend = strpos($str, '\\)');
-			    #echo "$texend\n";
-			    if ($texend) {
-			      $eqn = substr($str, 0, $texend);
-			      $str = substr($str, $texend+2);
-			      #echo "$eqn\n";
-			      #echo "$str\n";
-			      $texspan = $this->makeInlineMath($eqn);
-			      return $this->hashPart($texspan);
-		      }
-		      else {
-		        return $str;
-	        }
-			  }
-			  else {
-				  return $this->hashPart("&#". ord($token{1}). ";");
-			  }
+					#echo "$token\n";
+					#echo "$str\n\n";
+					$texend = strpos($str, '\\)');
+					#echo "$texend\n";
+					if ($texend) {
+						$eqn = substr($str, 0, $texend);
+						$str = substr($str, $texend + 2);
+						#echo "$eqn\n";
+						#echo "$str\n";
+						$texspan = $this->makeInlineMath($eqn);
+						return $this->hashPart($texspan);
+					} else {
+						return $str;
+					}
+				} else {
+					return $this->hashPart("&#". ord($token{1}). ";");
+				}
 			case "`":
 				# Search for end marker in remaining text.
 				if (preg_match('/^(.*?[^`])'.preg_quote($token).'(?!`)(.*)$/sm', 
@@ -1743,9 +1740,9 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 	### Extra Attribute Parser ###
 
 	# Expression to use to catch attributes (includes the braces)
-	protected var $id_class_attr_catch_re = '\{((?:[ ]*[#.][-_:a-zA-Z0-9]+){1,})[ ]*\}';
+	protected $id_class_attr_catch_re = '\{((?:[ ]*[#.][-_:a-zA-Z0-9]+){1,})[ ]*\}';
 	# Expression to use when parsing in a context when no capture is desired
-	protected var $id_class_attr_nocatch_re = '\{(?:[ ]*[#.][-_:a-zA-Z0-9]+){1,}[ ]*\}';
+	protected $id_class_attr_nocatch_re = '\{(?:[ ]*[#.][-_:a-zA-Z0-9]+){1,}[ ]*\}';
 
 	protected function doExtraAttributes($tag_name, $attr) {
 	#
@@ -2932,7 +2929,10 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
         }        
         else
         {
-            $codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+			$codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+			$codeblock = preg_replace_callback('/^\n+/',
+				array(&$this, '_doFencedCodeBlocks_newlines'), $codeblock);
+
             $pre_attr_str  = $this->code_attr_on_pre ? $attr_str : '';
             $code_attr_str = $this->code_attr_on_pre ? '' : $attr_str;
             $codeblock  = "<pre$pre_attr_str><code$code_attr_str>$codeblock</code></pre>";            
@@ -3217,7 +3217,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 		}
 	}
 
-    function doTOC($text) {
+    protected function doTOC($text) {
     #    
     # Adds TOC support by including the following on a single line:
     #    
@@ -3236,8 +3236,6 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
         }
         return trim ($text, "\n");
     }
-
-
 }
 
 
