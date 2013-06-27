@@ -608,7 +608,12 @@ class Markdown {
 			$url = $this->urls[$link_id];
 			$url = $this->encodeAttribute($url);
 			
-			$result = "<a href=\"$url\"";
+			$target = "";
+			if (substr($url, 0, 4) == 'http') {
+				$target = " target=\"_blank\"";
+			} 
+
+			$result = "<a$target href=\"$url\"";
 			if ( isset( $this->titles[$link_id] ) ) {
 				$title = $this->titles[$link_id];
 				$title = $this->encodeAttribute($title);
@@ -632,7 +637,12 @@ class Markdown {
 
 		$url = $this->encodeAttribute($url);
 
-		$result = "<a href=\"$url\"";
+		$target = "";
+		if (substr($url, 0, 4) == 'http') {
+			$target = " target=\"_blank\"";
+		} 
+
+		$result = "<a$target href=\"$url\"";
 		if (isset($title)) {
 			$title = $this->encodeAttribute($title);
 			$result .=  " title=\"$title\"";
@@ -1373,7 +1383,13 @@ class Markdown {
 	}
 	protected function _doAutoLinks_url_callback($matches) {
 		$url = $this->encodeAttribute($matches[1]);
-		$link = "<a href=\"$url\">$url</a>";
+
+		$target = "";
+		if (substr($url, 0, 4) == 'http') {
+			$target = " target=\"_blank\"";
+		} 
+
+		$link = "<a$target href=\"$url\">$url</a>";
 		return $this->hashPart($link);
 	}
 	protected function _doAutoLinks_email_callback($matches) {
@@ -2368,7 +2384,12 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 			$url = $this->urls[$link_id];
 			$url = $this->encodeAttribute($url);
 			
-			$result = "<a href=\"$url\"";
+			$target = "";
+			if (substr($url, 0, 4) == 'http') {
+				$target = " target=\"_blank\"";
+			} 
+
+			$result = "<a$target href=\"$url\"";
 			if ( isset( $this->titles[$link_id] ) ) {
 				$title = $this->titles[$link_id];
 				$title = $this->encodeAttribute($title);
@@ -2393,10 +2414,15 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 		$title			=& $matches[7];
 		$attr  = $this->doExtraAttributes("a", $dummy =& $matches[8]);
 
-
 		$url = $this->encodeAttribute($url);
+			
+		$target = "";
+		if (substr($url, 0, 4) == 'http') {
+			$target = " target=\"_blank\"";
+		} 
 
-		$result = "<a href=\"$url\"";
+		$result = "<a$target href=\"$url\"";
+	
 		if (isset($title)) {
 			$title = $this->encodeAttribute($title);
 			$result .=  " title=\"$title\"";
