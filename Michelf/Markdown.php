@@ -2875,6 +2875,12 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 	# ~~~
 	# Code block
 	# ~~~
+	# 
+	# or
+	# 
+	# ```
+	# Code block
+	# ```
 	#
 		$less_than_tab = $this->tab_width;
 		
