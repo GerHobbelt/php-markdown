@@ -1006,8 +1006,13 @@ class Markdown {
 	#
 	# Create a code span markup for $code. Called from handleSpanToken.
 	#
-		$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
-		return $this->hashPart("<code>$code</code>");
+		if(count(explode("\n", $code)) > 1) {
+			$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
+			return $this->hashPart("<pre><code>$code</code></pre>");
+		}else{
+			$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
+			return $this->hashPart("<code>$code</code>");
+		}
 	}
 
   function makeInlineMath($tex) {
@@ -2838,6 +2843,8 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				# 1: Opening marker
 				(
 					~{3,} # Marker: three tilde or more.
+					|
+					`{3,} # Marker: three or more grave accents (github flavored markdown).
 				)
 				[ ]*
 				(?:
@@ -3184,4 +3191,3 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 }
 
 
-?>
