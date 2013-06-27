@@ -1,7 +1,7 @@
-PHP Markdown Extra
-==================
+PHP Markdown
+============
 
-Version 1.2.6 - Sun 13 Jan 2013
+PHP Markdown Lib 1.3-beta1 - Sun 13 Jan 2013
 
 by Michel Fortin  
 <http://michelf.ca/>
@@ -15,8 +15,8 @@ table of contents support added by Joe Topjian
 Introduction
 ------------
 
-This is a special version of PHP Markdown with extra features. See
-<http://michelf.com/projects/php-markdown/extra/> for details.
+This is a library package that includes both PHP Markdown and its sibling
+PHP Markdown Extra which additional features.
 
 Markdown is a text-to-HTML conversion tool for web writers. Markdown
 allows you to write using an easy-to-read, easy-to-write plain text
@@ -38,121 +38,47 @@ Markdown page: <http://daringfireball.net/projects/markdown/>
 Installation and Requirement
 ----------------------------
 
-PHP Markdown requires PHP version 4.0.5 or later.
+This library package requires PHP 5.3 or later.
+
+Note: The older plugin/library hybrid package for PHP Markdown and
+PHP Markdown Extra is still maintained and will work with PHP 4.0.5 and later.
 
 Before PHP 5.3.7, pcre.backtrack_limit defaults to 100 000, which is too small
 in many situations. You might need to set it to higher values. Later PHP 
 releases defaults to 1 000 000, which is usually fine.
 
 
-### WordPress ###
+Usage
+-----
 
-PHP Markdown works with [WordPress][wp], version 1.2 or later.
+You can use PHP Markdown easily in your PHP program. This library package
+is meant to be used with autoloading, so putting the 'michelf' folder
+in your include path should be enough for this to work:
 
- [wp]: http://wordpress.org/
+	use \michelf\Markdown;
+	$my_html = Markdown::defaultTransform($my_text);
 
-1.  To use PHP Markdown with WordPress, place the "markdown.php" file 
-    in the "plugins" folder. This folder is located inside 
-    "wp-content" at the root of your site:
+PHP Markdown Extra is also available the same way:
 
-        (site home)/wp-content/plugins/
-
-2.  Activate the plugin with the administrative interface of 
-    WordPress. In the "Plugins" section you will now find Markdown. 
-    To activate the plugin, click on the "Activate" button on the 
-    same line as Markdown. Your entries will now be formatted by 
-    PHP Markdown.
-
-3.  To post Markdown content, you'll first have to disable the 
-    "visual" editor in the User section of WordPress.
-
-You can configure PHP Markdown to not apply to the comments on your 
-WordPress weblog. See the "Configuration" section below.
-
-It is not possible at this time to apply a different set of 
-filters to different entries. All your entries will be formatted by 
-PHP Markdown. This is a limitation of WordPress. If your old entries 
-are written in HTML (as opposed to another formatting syntax, like 
-Textile), they'll probably stay fine after installing Markdown.
-
-
-### Replacing Textile in TextPattern ###
-
-[TextPattern][tp] use [Textile][tx] to format your text. You can 
-replace Textile by Markdown in TextPattern without having to change
-any code by using the *Textile Compatibility Mode*. This may work 
-with other software that expect Textile too.
-
- [tx]: http://www.textism.com/tools/textile/
- [tp]: http://www.textpattern.com/
-
-1.  Rename the "markdown.php" file to "classTextile.php". This will
-    make PHP Markdown behave as if it was the actual Textile parser.
-
-2.  Replace the "classTextile.php" file TextPattern installed in your
-    web directory. It can be found in the "lib" directory:
-
-        (site home)/textpattern/lib/
-
-Contrary to Textile, Markdown does not convert quotes to curly ones 
-and does not convert multiple hyphens (`--` and `---`) into en- and 
-em-dashes. If you use PHP Markdown in Textile Compatibility Mode, you 
-can solve this problem by installing the "smartypants.php" file from 
-[PHP SmartyPants][psp] beside the "classTextile.php" file. The Textile 
-Compatibility Mode function will use SmartyPants automatically without 
-further modification.
-
- [psp]: http://michelf.ca/projects/php-smartypants/
-
-
-### In Your Own Programs ###
-
-You can use PHP Markdown easily in your current PHP program. Simply 
-include the file and then call the Markdown function on the text you 
-want to convert:
-
-    include_once "markdown.php";
-    $my_html = Markdown($my_text);
+	use \michelf\MarkdownExtra;
+	$my_html = MarkdownExtra::defaultTransform($my_text);
 
 If you wish to use PHP Markdown with another text filter function 
 built to parse HTML, you should filter the text *after* the Markdown
 function call. This is an example with [PHP SmartyPants][psp]:
 
-    $my_html = SmartyPants(Markdown($my_text));
+	use \michelf\Markdown, \michelf\SmartyPants;
+	$my_html = Markdown::defaultTransform($my_text);
+	$my_html = SmartyPants::defaultTransform($my_html);
 
+All these examples are using the static `markdown` function found inside the 
+parser class. If you want to customize the parser, you can also instantiate
+it directly and change some configuration variables:
 
-### With Smarty ###
-
-If your program use the [Smarty][sm] template engine, PHP Markdown 
-can now be used as a modifier for your templates. Rename "markdown.php" 
-to "modifier.markdown.php" and put it in your smarty plugins folder.
-
-  [sm]: http://smarty.php.net/
-
-If you are using MovableType 3.1 or later, the Smarty plugin folder is 
-located at `(MT CGI root)/php/extlib/smarty/plugins`. This will allow 
-Markdown to work on dynamic pages.
-
-
-### Updating Markdown in Other Programs ###
-
-Many web applications now ship with PHP Markdown, or have plugins to 
-perform the conversion to HTML. You can update PHP Markdown -- or 
-replace it with PHP Markdown Extra -- in many of these programs by 
-swapping the old "markdown.php" file for the new one.
-
-Here is a short non-exhaustive list of some programs and where they 
-hide the "markdown.php" file.
-
-| Program   | Path to Markdown
-| -------   | ----------------
-| [Pivot][] | `(site home)/pivot/includes/markdown/`
-
-If you're unsure if you can do this with your application, ask the 
-developer, or wait for the developer to update his application or 
-plugin with the new version of PHP Markdown.
-
- [Pivot]: http://pivotlog.net/
+	use \michelf\MarkdownExtra;
+	$parser = new MarkdownExtra;
+	$parser->fn_id_prefix = "post22-";
+	$my_html = $parser->transform($my_text);
 
 
 Configuration
@@ -167,17 +93,8 @@ Markdown can be configured to produce HTML-style tags; e.g.:
 
     <br>
 
-To do this, you  must edit the "MARKDOWN_EMPTY_ELEMENT_SUFFIX" 
-definition below the "Global default settings" header at the start of 
-the "markdown.php" file.
-
-
-### WordPress-Specific Settings ###
-
-By default, the Markdown plugin applies to both posts and comments on 
-your WordPress weblog. To deactivate one or the other, edit the 
-`MARKDOWN_WP_POSTS` or `MARKDOWN_WP_COMMENTS` definitions under the 
-"WordPress settings" header at the start of the "markdown.php" file.
+To do this, you must set the `empty_element_suffix` variable of the parser
+object to ">".
 
 
 Bugs
@@ -196,6 +113,8 @@ See Installation and Requirement above for details.
 
 Version History
 ---------------
+
+Lib 1.3-beta1 (13 Jan 2013):
 
 Extra 1.2.6 (13 Jan 2013):
 
@@ -248,12 +167,17 @@ Extra 1.2.6 (13 Jan 2013):
 
 1.0.1p (13 Jan 2013):
 
-*	Fixed an issue where some XML-style empty tags (such as `<br/>`) were not 
-	recognized correctly as such when inserted into Markdown-formatted text.
+*	Created a library-style unified package that will work with namespace-based 
+	autoloading introduced in PHP 5.3. This is the same parser, but packaged
+	differently. It is available separatedly from the two other available 
+	packages, and requires PHP 5.3.
 
-*	The following HTML 5 elements are treated as block elements when at the 
+*	The following HTML 5 elements are treated as block elements when at the
 	root of an HTML block: `article`, `section`, `nav`, `aside`, `hgroup`, 
 	`header`, `footer`, and `figure`. `svg` too.
+
+*	Fixed an issue where some XML-style empty tags (such as `<br/>`) were not 
+	recognized correctly as such when inserted into Markdown-formatted text.
 
 
 1.0.1o (8 Jan 2012):
