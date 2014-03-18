@@ -21,11 +21,11 @@ namespace Michelf;
 # Markdown Parser Class
 #
 
-class Markdown {
+class Markdown implements MarkdownInterface {
 
 	### Version ###
 
-	const  MARKDOWNLIB_VERSION  =  "1.3";
+	const  MARKDOWNLIB_VERSION  =  "1.4.0";
 
 	### Simple Function Interface ###
 
@@ -1344,7 +1344,7 @@ class Markdown {
 			# Ampersand-encoding based entirely on Nat Irons's Amputator
 			# MT plugin: <http://bumppo.net/projects/amputator/>
 			$text = preg_replace('/&(?!#?[xX]?(?:[0-9a-fA-F]+|\w+);)/', 
-								'&amp;', $text);;
+								'&amp;', $text);
 		}
 		# Encode remaining <'s
 		$text = str_replace('<', '&lt;', $text);
@@ -1377,8 +1377,15 @@ class Markdown {
 			>
 			}xi',
 			array(&$this, '_doAutoLinks_email_callback'), $text);
+		$text = preg_replace_callback('{<(tel:([^\'">\s]+))>}i',array(&$this, '_doAutoLinks_tel_callback'), $text);
 
 		return $text;
+	}
+	protected function _doAutoLinks_tel_callback($matches) {
+		$url = $this->encodeAttribute($matches[1]);
+		$tel = $this->encodeAttribute($matches[2]);
+		$link = "<a href=\"$url\">$tel</a>";
+		return $this->hashPart($link);
 	}
 	protected function _doAutoLinks_url_callback($matches) {
 		$url = $this->encodeAttribute($matches[1]);
@@ -1624,7 +1631,7 @@ class Markdown {
 # one.
 #
 
-class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
+abstract class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 
 	### Configuration Variables ###
 
@@ -1934,9 +1941,6 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 					<\?.*?\?> | <%.*?%>	# Processing instruction
 				|
 					<!\[CDATA\[.*?\]\]>	# CData Block
-				|
-					# Code span marker
-					`+
 				'. ( !$span ? ' # If not in span.
 				|
 					# Indented code block
@@ -1948,7 +1952,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				|
 					# Fenced code block marker
 					(?<= ^ | \n )
-					[ ]{0,'.($indent+3).'}~{3,}
+					[ ]{0,'.($indent+3).'}(?:~{3,}|`{3,})
 									[ ]*
 					(?:
 					\.?[-_:a-zA-Z0-9]+ # standalone class name
@@ -1956,8 +1960,14 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 						'.$this->id_class_attr_nocatch_re.' # extra attributes
 					)?
 					[ ]*
-					\n
+					(?= \n )
 				' : '' ). ' # End (if not is span).
+				|
+					# Code span marker
+					# Note, this regex needs to go after backtick fenced
+					# code blocks but it should also be kept outside of the
+					# "if not in span" condition adding backticks to the parser
+					`+
 				)
 			}xs';
 
@@ -2000,27 +2010,11 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 			$tag_re = preg_quote($tag); # For use in a regular expression.
 			
 			#
-			# Check for: Code span marker
-			#
-			if ($tag{0} == "`") {
-				# Find corresponding end marker.
-				$tag_re = preg_quote($tag);
-				if (preg_match('{^(?>.+?|\n(?!\n))*?(?<!`)'.$tag_re.'(?!`)}',
-					$text, $matches))
-				{
-					# End marker found: pass text unchanged until marker.
-					$parsed .= $tag . $matches[0];
-					$text = substr($text, strlen($matches[0]));
-				}
-				else {
-					# Unmatched marker: just skip it.
-					$parsed .= $tag;
-				}
-			}
-			#
 			# Check for: Fenced code block marker.
+			# Note: need to recheck the whole tag to disambiguate backtick
+			# fences from code spans
 			#
-			else if (preg_match('{^\n?([ ]{0,'.($indent+3).'})(~+)}', $tag, $capture)) {
+			if (preg_match('{^\n?([ ]{0,'.($indent+3).'})(~{3,}|`{3,})[ ]*(?:\.?[-_:a-zA-Z0-9]+|'.$this->id_class_attr_nocatch_re.')?[ ]*\n?$}', $tag, $capture)) {
 				# Fenced code block marker: find matching end marker.
 				$fence_indent = strlen($capture[1]); # use captured indent in re
 				$fence_re = $capture[2]; # use captured fence in re
@@ -2043,6 +2037,25 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				# Indented code block: pass it unchanged, will be handled 
 				# later.
 				$parsed .= $tag;
+			}
+			#
+			# Check for: Code span marker
+			# Note: need to check this after backtick fenced code blocks
+			#
+			else if ($tag{0} == "`") {
+				# Find corresponding end marker.
+				$tag_re = preg_quote($tag);
+				if (preg_match('{^(?>.+?|\n(?!\n))*?(?<!`)'.$tag_re.'(?!`)}',
+					$text, $matches))
+				{
+					# End marker found: pass text unchanged until marker.
+					$parsed .= $tag . $matches[0];
+					$text = substr($text, strlen($matches[0]));
+				}
+				else {
+					# Unmatched marker: just skip it.
+					$parsed .= $tag;
+				}
 			}
 			#
 			# Check for: Opening Block level tag or
@@ -2885,7 +2898,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				(?:\n|\A)
 				# 1: Opening marker
 				(
-					[~`]{3,} # Marker: three tilde or backticks or more. (github flavored markdown)
+					(?:~{3,}|`{3,}) # 3 or more tildes/backticks. (github flavored markdown)
 				)
 				[ ]*
 				(?:
@@ -2904,7 +2917,7 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 				)
 				
 				# Closing marker.
-				\1 [ ]* \n
+				\1 [ ]* (?= \n )
 			}xm',
 			array(&$this, '_doFencedCodeBlocks_callback'), $text);
 
@@ -3063,8 +3076,8 @@ class _MarkdownExtra_TmpImpl extends \Michelf\Markdown {
 			$text .= "<div class=\"footnotes\">\n";
 			$text .= "<hr". $this->empty_element_suffix ."\n";
 			$text .= "<ol>\n\n";
-			
-			$attr = " rev=\"footnote\"";
+
+			$attr = "";
 			if ($this->fn_backlink_class != "") {
 				$class = $this->fn_backlink_class;
 				$class = $this->encodeAttribute($class);
